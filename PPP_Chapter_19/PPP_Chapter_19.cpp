@@ -31,17 +31,43 @@
 
 template<typename T> 
 struct S {
-    
+    S() : val{ T() } {}
     S(T v) : val{ v } {}        // Drill 2
     T& get();                   // Drill 5
-
+    const T& get() const;       // Drill 11
+    void set(T& const v);
+    T& operator=(const T&);     // Drill 10
+private:                        // Drill 7
     T val;
 };
 
 //Drill 6
-template<typename T> T& S<T>::get()
-{
+template<typename T> T& S<T>::get() { return val; }
+
+template<typename T> const T& S<T>::get() const { return val; }
+
+// Drill 9
+template<typename T> void S<T>::set(T& const v) { val = v; }
+
+// Drill 13
+template<typename T> T& S<T>::operator=(const T& t)
+{    
+    val = t;
     return val;
+}
+
+template<typename T> istream& operator>>(istream& is, S<T>& my_s)
+{
+    T v;
+    is >> v;
+    if (!is) return is;
+    my_s = v;
+    return is;
+}
+
+template<typename T> void rear_val(T& v)
+{
+    cin >> v;
 }
 
 int main()
@@ -54,18 +80,35 @@ int main()
     S < vector<int>> s_vec{ vector < int>{1,2,3,4} };
 
     // Drill4
-    cout <<"s_int: " << s_int.val << '\n';
-    cout << "s_char: " << s_char.val << '\n';
-    cout << "s_dbl: " << s_dbl.val << '\n';
-    cout << "s_string: " << s_string.val << '\n';
+    // Drill 8
+    cout <<"s_int: " << s_int.get() << '\n';
+    cout << "s_char: " << s_char.get() << '\n';
+    cout << "s_dbl: " << s_dbl.get() << '\n';
+    cout << "s_string: " << s_string.get() << '\n';
     cout << "vector s_vec: ";
-    for (int i = 0; i < s_vec.val.size(); ++i) {
-        cout << s_vec.val[i];
-        if (i < s_vec.val.size() - 1) cout << ',';
+    for (int i = 0; i < s_vec.get().size(); ++i) {
+        cout << s_vec.get()[i];
+        if (i < s_vec.get().size() - 1) cout << ',';
     }
 
+    S<double>s_dbl2= s_dbl;
+    cout << "\ns_dbl2: " << s_dbl2.get() << '\n';
 
+    // Drill 13
+    cout << "Input an int: ";
+    rear_val(s_int);
+    cout << "s_int() read: " << s_int.get() << '\n';
 
+    cout << "Input a char: ";
+    rear_val(s_char);
+    cout << "s_char() read: " << s_char.get() << '\n';
 
+    cout << "Input a double: ";
+    rear_val(s_dbl);
+    cout << "s_dbl() read: " << s_dbl.get() << '\n';
+
+    cout << "Input a string: ";
+    rear_val(s_string);
+    cout << "s_string() read: " << s_string.get() << '\n';
 }
 
