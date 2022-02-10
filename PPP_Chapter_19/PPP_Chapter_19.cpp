@@ -156,7 +156,7 @@ int main()
     cout <<'\n' << s_vec.get()<<'\n';
 
     //Drill 14
-    S < vector<string>> s_vec2;
+    S < vector<int>> s_vec2;
     cout << "Please enter a vector in v,v,v,v etc format:" << '\n';
     read_val(s_vec2);
 
