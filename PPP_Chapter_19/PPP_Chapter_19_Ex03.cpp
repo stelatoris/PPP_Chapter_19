@@ -75,9 +75,6 @@ try {
 	st.add_symbol("Omega", 0.56714'32904'09783'87299);
 	st.add_symbol("c", 299'792'458);	
 
-	//vector<Symbol_Table<int, string>> s_table{ {40, "John"},{41, "Smith"}, {43, "Arnold"}, {18, "Conner"} };
-	//print_vector(st);
-
 	cout <<"PI:"<< st["PI"] << '\n';
 	cout << "Phi: " << st["Phi"] << '\n';
 	cout << "c: " << st["c"] << '\n';
