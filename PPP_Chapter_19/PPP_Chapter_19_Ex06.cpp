@@ -108,7 +108,7 @@ bool operator>=(const Number<T>& a, const Number<U>& b)
 //--------------------------------------------
 
 int main()
-try {	
+try {
 	Number<double> n1{ 5.2 };
 	Number<double> n2 = 10.7;
 	Number<double> n3 = n1;
@@ -137,7 +137,7 @@ try {
 	else if (n5 > n2) cout << n2 << " is smaller than " << n5 << "!\n";
 	else if (n5 == n2) cout << n2 << " is equal to " << n5 << "!\n";
 
-	
+
 }
 
 catch (exception& e) {
@@ -146,4 +146,3 @@ catch (exception& e) {
 catch (...) {
 	cerr << "unknown exception\n";
 }
-
