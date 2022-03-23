@@ -13,9 +13,21 @@
 #include <iostream>
 #include <stdexcept>
 
-// an almost real vector of Ts:
 template<typename T>
+class allocator {
+public:
+	T* allocate(int n) { return malloc(n*sizeof(T)); }
+	void deallocate(T* p) { free(p); }
+
+	void construct(T* p, const T& v) { new (p) T(v); }	// std::allocator::construct
+	void destroy(T* p) { p->~T(); }						// std::allocator::destroy
+};
+
+
+// an almost real vector of Ts:
+template<typename T, typename A=allocator<T>>
 class vector { // read “for all types T” (just like in math)
+	A alloc;	// use allocate to handle memory for elements
 	int sz; // the size
 	T* elem; // a pointer to the elements
 	int space; // size + free space
@@ -39,8 +51,8 @@ public:
 	void reserve(int newalloc);
 };
 
-template<typename T>
-vector<T>& vector<T>::operator=(const vector& a)
+template<typename T, typename A>
+vector<T,A>& vector<T,A>::operator=(const vector& a)
 {
 	if (this == &a) return *this; // self-assignment, no work needed
 	if (a.sz <= space) { // enough space, no need for new allocation
@@ -56,16 +68,16 @@ vector<T>& vector<T>::operator=(const vector& a)
 	return *this; // return a self-reference
 }
 
-template<typename T>
-vector<T>::vector(vector&& a)
+template<typename T, typename A>
+vector<T,A>::vector(vector&& a)
 	:sz{ a.sz }, elem{ a.elem } // copy a’s elem and sz
 {
 	a.sz = 0; // make a the empty vector
 	a.elem = nullptr;
 }
 
-template<typename T>
-vector<T>& vector<T>::operator=(vector&& a) // move a to this vector
+template<typename T, typename A>
+vector<T,A>& vector<T,A>::operator=(vector&& a) // move a to this vector
 {
 	delete[] elem; // deallocate old space
 	elem = a.elem; // copy a’s elem and sz
@@ -75,8 +87,8 @@ vector<T>& vector<T>::operator=(vector&& a) // move a to this vector
 	return *this; // return a self-reference (see §17.10)
 }
 
-template<typename T>
-void vector<T>::reserve(int newalloc)
+template<typename T, typename A>
+void vector<T,A>::reserve(int newalloc)
 {
 	if (newalloc <= space) return; // never decrease allocation
 	T* p = new T[newalloc]; // allocate new space
@@ -86,8 +98,8 @@ void vector<T>::reserve(int newalloc)
 	space = newalloc;
 }
 
-template<typename T>
-void vector<T>::resize(int newsize)
+template<typename T, typename A>
+void vector<T,A>::resize(int newsize)
 // make the vector have newsize elements
 // initialize each new element with the default value 0.0
 {
@@ -96,8 +108,8 @@ void vector<T>::resize(int newsize)
 	sz = newsize;
 }
 
-template<typename T>
-void vector<T>::push_back(const T& d)
+template<typename T, typename A>
+void vector<T,A>::push_back(const T& d)
 // increase vector size by one; initialize the new element with d
 {
 	if (space == 0)
