@@ -4,146 +4,145 @@
 //	************************************************************************************
 //	* Programming Principles and Practice Using C++, Second Edition, Bjarne Stroustrup *
 //	************************************************************************************
-//	7. Try your solution to exercise 2 with some Numbers:
-// 
-//	2. Write a template function that takes a vector<T> vt and a vector<U> vu as
-//	arguments and returns the sum of all vt[i] * vu[i]s.
+//	8. Implement an allocator(§19.3.7) using the basic allocation functions malloc()
+//	and free() (§B.11.4).Get vector as defined by the end of §19.4 to
+//	work for a few simple test cases.Hint: Look up “placement new”and
+//	“explicit call of destructor” in a complete C++ reference.
 
-#include "std_lib_facilities.h"
+//#include "std_lib_facilities.h"
+#include <iostream>
+#include <stdexcept>
 
+// an almost real vector of Ts:
 template<typename T>
-class Number {
-	T val;
+class vector { // read “for all types T” (just like in math)
+	int sz; // the size
+	T* elem; // a pointer to the elements
+	int space; // size + free space
 public:
-	Number(T value) : val{ value } {}
-	Number() : val{ T() } {}
-
-	T get() const { return val; }
-	void set(T n) { val = n; }
-
-	T& operator=(const T& n) { val = n; return *this; }
+	vector() : sz{ 0 }, elem{ nullptr }, space{ 0 } { }
+	explicit vector(int s) :sz{ s }, elem{ new T[s] }, space{ s }
+	{
+		for (int i = 0; i < sz; ++i) elem[i] = 0; // elements are initialized
+	}
+	vector(const vector&); // copy constructor
+	vector& operator=(const vector&); // copy assignment
+	vector(vector&&); // move constructor
+	vector& operator=(vector&&); // move assignment
+	~vector() { delete[] elem; } // destructor
+	T& operator[] (int n) { return elem[n]; } // access: return reference
+	const T& operator[] (int n) const { return elem[n]; }
+	int size() const { return sz; } // the current size
+	int capacity() const { return space; }
+	void resize(int newsize); // growth
+	void push_back(const T& d);
+	void reserve(int newalloc);
 };
 
 template<typename T>
-ostream& operator<<(ostream& os, const Number<T>& n)
+vector<T>& vector<T>::operator=(const vector& a)
 {
-	return os << n.get();
+	if (this == &a) return *this; // self-assignment, no work needed
+	if (a.sz <= space) { // enough space, no need for new allocation
+		for (int i = 0; i < a.sz; ++i) elem[i] = a.elem[i]; // copy elements
+		sz = a.sz;
+		return *this;
+	}
+	T* p = new T[a.sz]; // allocate new space
+	for (int i = 0; i < a.sz; ++i) p[i] = a.elem[i]; // copy elements
+	delete[] elem; // deallocate old space
+	space = sz = a.sz; // set new size
+	elem = p; // set new elements
+	return *this; // return a self-reference
 }
 
 template<typename T>
-istream& operator>>(istream& is, Number<T>& n)
+vector<T>::vector(vector&& a)
+	:sz{ a.sz }, elem{ a.elem } // copy a’s elem and sz
 {
-	T temp{};
-	is >> temp;
-	Number<T>nn{ temp };
-	if (!is) return is;
-	n = nn;
-	return is;
+	a.sz = 0; // make a the empty vector
+	a.elem = nullptr;
 }
 
-//-----------------------------------------
-template<typename T, typename U>
-Number<T> operator+(const Number<T>& a, const Number<U>& b)
+template<typename T>
+vector<T>& vector<T>::operator=(vector&& a) // move a to this vector
 {
-	return a.get() + b.get();
+	delete[] elem; // deallocate old space
+	elem = a.elem; // copy a’s elem and sz
+	sz = a.sz;
+	a.elem = nullptr; // make a the empty vector
+	a.sz = 0;
+	return *this; // return a self-reference (see §17.10)
 }
 
-template<typename T, typename U>
-Number<T> operator-(const Number<T>& a, const Number<U>& b)
+template<typename T>
+void vector<T>::reserve(int newalloc)
 {
-	return a.get() - b.get();
+	if (newalloc <= space) return; // never decrease allocation
+	T* p = new T[newalloc]; // allocate new space
+	for (int i = 0; i < sz; ++i) p[i] = elem[i]; // copy old elements
+	delete[] elem; // deallocate old space
+	elem = p;
+	space = newalloc;
 }
 
-template<typename T, typename U>
-Number<T> operator*(const Number<T>& a, const Number<U>& b)
+template<typename T>
+void vector<T>::resize(int newsize)
+// make the vector have newsize elements
+// initialize each new element with the default value 0.0
 {
-	return a.get() * b.get();
+	reserve(newsize);
+	for (int i = sz; i < newsize; ++i) elem[i] = 0; // initialize new elements
+	sz = newsize;
 }
 
-template<typename T, typename U>
-Number<T> operator/(const Number<T>& a, const Number<U>& b)
+template<typename T>
+void vector<T>::push_back(const T& d)
+// increase vector size by one; initialize the new element with d
 {
-	return a.get() / b.get();
+	if (space == 0)
+		reserve(8); // start with space for 8 elements
+	else if (sz == space)
+		reserve(2 * space); // get more space
+	elem[sz] = d; // add d at end
+	++sz; // increase the size (sz is the number of elements)
 }
 
-template<typename T, typename U>
-Number<T> operator%(const Number<T>& a, const Number<U>& b)
+template<typename T>
+void print_vector(vector<T>& v)
 {
-	return int(a.get()) % int(b.get());
+	for (int i = 0; i < v.size(); ++i) {		
+		std::cout << v[i];
+		if (i < v.size()-1)std::cout << ',';
+	}
+	std::cout << '\n';
 }
-
-template<typename T, typename U>
-void operator+=(Number<T>& a, const Number<U>& b)
-{	
-	a.set(a.get() + b.get());
-}
-
-//------------
-
-template<typename T, typename U>
-bool operator<(const Number<T>& a, const Number<U>& b)
-{
-	return a.get() < b.get();
-}
-
-template<typename T, typename U>
-bool operator>(const Number<T>& a, const Number<U>& b)
-{
-	return a.get() > b.get();
-}
-
-template<typename T, typename U>
-bool operator==(const Number<T>& a, const Number<U>& b)
-{
-	return a.get() == b.get();
-}
-
-template<typename T, typename U>
-bool operator!=(const Number<T>& a, const Number<U>& b)
-{
-	return a.get() != b.get();
-}
-
-template<typename T, typename U>
-bool operator<=(const Number<T>& a, const Number<U>& b)
-{
-	return a.get() <= b.get();
-}
-
-template<typename T, typename U>
-bool operator>=(const Number<T>& a, const Number<U>& b)
-{
-	return a.get() >= b.get();
-}
-//------------------------------------------------------
-
-template<typename T, typename U>
-T& sum_all(const vector<T>& vt, const vector<U>& vu)
-{
-	if (vt.size() != vu.size()) error("cannot sum diffferent sized vectors!");
-
-	T sum{ T() };
-	for (int i = 0; i < vt.size(); ++i) sum += vt[i] * vu[i];
-
-	return sum;}
-
-//-----------------------------------------------------
 
 int main()
 try {
+	vector<int>v_int1;
+	v_int1.push_back(1);
+	v_int1.push_back(2);
+	v_int1.push_back(3);
+	v_int1.push_back(4);
+	v_int1.push_back(5);
 
-	vector<Number<int>> v_int1{ 1,2,3,4,5,6,7,8,9,10 };
-	vector<Number<int>> v_int2{ 1,2,3,4,5,6,7,8,9,10 };
-	vector<Number<double>> v_double{ 1.5,2.5,3.5,4.5,5.5,6.5,7.5,8.5,9.5,10.5 };
+	vector<int>v2;
+	v2 = v_int1;
+	v2.push_back(6);
+	//vector<int>v3{ v2 };
 
-	cout << "Sum of vectors v_int1 and v_double: " << sum_all(v_int1, v_double) << '\n';
-	cout << "Sum of vectors v_int1 and v_int2: " << sum_all(v_int1, v_int2) << '\n';
+	print_vector(v_int1);
+	print_vector(v2);
+
+	
+
 }
 
-catch (exception& e) {
-	cerr << "exception: " << e.what() << endl;
+catch (std::exception& e) {
+	std::cerr << "exception: " << e.what() << std::endl;
 }
 catch (...) {
-	cerr << "unknown exception\n";
+	std::cerr << "unknown exception\n";
 }
 
