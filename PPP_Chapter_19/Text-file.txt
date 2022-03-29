@@ -1,0 +1,15 @@
+hello
+apples
+blue
+tree
+house
+sun
+rain
+rocks
+water
+sky
+flower
+bug
+bee
+roof
+smoke
